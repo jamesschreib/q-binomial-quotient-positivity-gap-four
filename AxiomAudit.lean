@@ -1,15 +1,6 @@
 import QBinomialQuotientPositivityGapFour
 
-/-!
-This file is an informational trusted-base audit. Running it separates the
-kernel-checked, problem-specific reduction from the final publication theorem.
-
-The reduction declarations must depend only on Lean/mathlib's standard logical
-infrastructure (`propext`, `Classical.choice`, and `Quot.sound`). The external
-weighted-complete-intersection bridge and the final theorems that invoke it are
-expected to contain exactly the deliberately documented named trust boundary
-`weightedCompleteIntersectionBridge_external`.
--/
+/-! Trusted-base audit for the reduction and final theorems. -/
 
 open QBinomialQuotientPositivityGapFour
 
