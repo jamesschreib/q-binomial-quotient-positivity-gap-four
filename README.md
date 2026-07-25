@@ -1,6 +1,6 @@
-# Q-binomial quotient positivity at index gap four
+# The $l=k-4$ case of the positivity conjecture for a quotient of $q$-binomial coefficients
 
-The index-gap-four case of the q-binomial quotient positivity conjecture states that, for $4 \le k \le n$, if
+The $l=k-4$ case of the positivity conjecture for a quotient of $q$-binomial coefficients states that, for $4 \le k \le n$, if
 
 $$
 \frac{\genfrac{[}{]}{0pt}{}{n}{k}_q}{\genfrac{[}{]}{0pt}{}{n}{k-4}_q}

@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this formalization, please cite it using the metadata below."
-title: "Lean 4 Formalization of Q-binomial Quotient Positivity at Index Gap Four"
+title: "Lean 4 formalization of the l = k - 4 case of the positivity conjecture for a quotient of q-binomial coefficients"
 authors:
   - family-names: "Schreib"
     given-names: "James Alexander"
