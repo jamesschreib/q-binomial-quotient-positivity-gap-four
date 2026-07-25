@@ -1,6 +1,6 @@
-# The $l=k-4$ case of the positivity conjecture for a quotient of $q$-binomial coefficients
+# The $\ell=k-4$ case of $q$-binomial quotient positivity
 
-The $l=k-4$ case of the positivity conjecture for a quotient of $q$-binomial coefficients states that, for $4 \le k \le n$, if
+The $\ell=k-4$ case of the positivity conjecture for a quotient of $q$-binomial coefficients states that, for $4 \le k \le n$, if
 
 $$
 \frac{\genfrac{[}{]}{0pt}{}{n}{k}_q}{\genfrac{[}{]}{0pt}{}{n}{k-4}_q}
