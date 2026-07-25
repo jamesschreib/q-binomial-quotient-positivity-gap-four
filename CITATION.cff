@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this formalization, please cite it using the metadata below."
+title: "Lean 4 Formalization of Q-binomial Quotient Positivity at Index Gap Four"
+authors:
+  - family-names: "Schreib"
+    given-names: "James Alexander"
+    affiliation: "New York University"
+    email: "jas10320@nyu.edu"
+    orcid: "https://orcid.org/0009-0005-1048-0209"
+type: software
+version: "1.0.0"
+license: "Apache-2.0"
+repository-code: "https://github.com/jamesschreib/q-binomial-quotient-positivity-gap-four"
+keywords:
+  - "q-binomial coefficients"
+  - "algebraic combinatorics"
+  - "formal verification"
+  - "Lean 4"
