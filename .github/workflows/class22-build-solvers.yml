@@ -33,16 +33,23 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/marijnheule/drat-trim.git
           make -C drat-trim -j2
+      - name: Build march_cu
+        run: |
+          wget -q https://www.cs.utexas.edu/~marijn/Schur/march_cu.zip
+          unzip -q march_cu.zip -d march-src
+          make -C march-src -j2 || make -C "$(find march-src -type f -name Makefile -printf '%h\n' | head -1)" -j2
+          find march-src -type f -name march_cu -perm -111 -print
       - name: Package binaries
         run: |
           mkdir -p sat-toolchain
           cp kissat/build/kissat sat-toolchain/
           cp cadical/build/cadical sat-toolchain/
           cp drat-trim/drat-trim sat-toolchain/
+          cp "$(find march-src -type f -name march_cu -perm -111 | head -1)" sat-toolchain/
           sha256sum sat-toolchain/* > sat-toolchain/SHA256SUMS
           file sat-toolchain/*
       - uses: actions/upload-artifact@v4
         with:
-          name: class22-sat-toolchain-linux-x86_64
+          name: class22-sat-toolchain-with-march-linux-x86_64
           path: sat-toolchain/
           retention-days: 30
