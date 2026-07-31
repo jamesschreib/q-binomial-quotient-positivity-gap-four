@@ -1,0 +1,41 @@
+name: Class22 CMS incremental bootstrap
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends build-essential cmake ninja-build git libgmp-dev zlib1g-dev
+      - name: Build library and driver
+        run: |
+          git clone --depth 1 --branch release/v5.14.7 https://github.com/msoos/cryptominisat.git cms
+          cmake -S cms -B cms/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DENABLE_TESTING=OFF \
+            -DSTATS=OFF
+          cmake --build cms/build -j2
+          LIB=$(find cms/build -name 'libcryptominisat5.a' | head -1)
+          echo "LIB=$LIB"
+          g++ -O3 -DNDEBUG -std=c++20 \
+            -Icms/src -Icms/build \
+            class22/cms_incremental.cpp "$LIB" \
+            -lpthread -lz -lgmp -o cms_incremental
+          mkdir artifact
+          cp cms_incremental artifact/
+          strip artifact/cms_incremental || true
+          sha256sum artifact/cms_incremental > artifact/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cms-incremental-linux-x86_64
+          path: artifact/
+          retention-days: 7
