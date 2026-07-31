@@ -1,0 +1,35 @@
+name: Class22 CryptoMiniSat bootstrap
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends build-essential cmake ninja-build git libgmp-dev zlib1g-dev
+      - name: Build CryptoMiniSat 5.14.7
+        run: |
+          git clone --depth 1 --branch release/v5.14.7 https://github.com/msoos/cryptominisat.git cms
+          cmake -S cms -B cms/build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DENABLE_TESTING=OFF \
+            -DSTATS=OFF
+          cmake --build cms/build --target cryptominisat5 -j2
+          mkdir artifact
+          cp cms/build/cryptominisat5 artifact/
+          strip artifact/cryptominisat5 || true
+          artifact/cryptominisat5 --version | tee artifact/VERSION.txt
+          sha256sum artifact/cryptominisat5 > artifact/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cryptominisat5-linux-x86_64
+          path: artifact/
+          retention-days: 7
