@@ -1,0 +1,114 @@
+name: Temporary 7-thin literature/source recovery
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Recover public Peczarski source links
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p recovered
+          python3 - <<'PY'
+          import html.parser
+          import json
+          import re
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          starts = [
+              'https://www.mimuw.edu.pl/~marpe/research/index.html',
+              'http://www.mimuw.edu.pl/~marpe/research/index.html',
+              'https://www.mimuw.edu.pl/~marpe/research/',
+          ]
+          headers = {
+              'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/128 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          }
+
+          class Links(html.parser.HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.links=[]
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == 'a':
+                      d=dict(attrs)
+                      if d.get('href'): self.links.append(d['href'])
+
+          attempts=[]
+          html_body=None
+          base=None
+          for url in starts:
+              try:
+                  req=urllib.request.Request(url, headers=headers)
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      body=r.read()
+                      attempts.append({'url':url,'status':r.status,'length':len(body),'final':r.geturl()})
+                      if r.status == 200 and body:
+                          html_body=body; base=r.geturl(); break
+              except Exception as e:
+                  attempts.append({'url':url,'error':repr(e)})
+          Path('recovered/attempts.json').write_text(json.dumps(attempts,indent=2)+"\n")
+          if html_body is None:
+              print(json.dumps(attempts,indent=2))
+              raise SystemExit(0)
+
+          Path('recovered/research-index.html').write_bytes(html_body)
+          text=html_body.decode('utf-8','replace')
+          p=Links(); p.feed(text)
+          urls=[]
+          for href in p.links:
+              u=urllib.parse.urljoin(base,href)
+              if u.startswith(('http://','https://')):
+                  urls.append(u)
+          urls=sorted(dict.fromkeys(urls))
+          Path('recovered/all-links.txt').write_text('\n'.join(urls)+'\n')
+          keys=('gpc','thin','phd','9081','gold','proof')
+          interesting=[u for u in urls if any(k in u.lower() for k in keys)]
+          Path('recovered/interesting-links.txt').write_text('\n'.join(interesting)+'\n')
+          print(f'base={base} links={len(urls)} interesting={len(interesting)}')
+          for u in interesting: print(u)
+
+          report=[]
+          for idx,u in enumerate(interesting):
+              try:
+                  req=urllib.request.Request(u,headers=headers)
+                  with urllib.request.urlopen(req,timeout=120) as r:
+                      body=r.read()
+                      ctype=r.headers.get('Content-Type','')
+                      name=urllib.parse.unquote(urllib.parse.urlparse(r.geturl()).path.rsplit('/',1)[-1]) or f'item-{idx}'
+                      name=re.sub(r'[^A-Za-z0-9._+-]+','_',name)
+                      out=Path('recovered')/f'{idx:03d}-{name}'
+                      out.write_bytes(body)
+                      report.append({'url':u,'final':r.geturl(),'status':r.status,'length':len(body),'content_type':ctype,'file':out.name})
+              except Exception as e:
+                  report.append({'url':u,'error':repr(e)})
+          Path('recovered/download-report.json').write_text(json.dumps(report,indent=2)+"\n")
+          print(json.dumps(report,indent=2))
+          PY
+
+          find recovered -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+          for f in recovered/*; do
+            case "$f" in
+              *.tar.gz|*.tgz) mkdir -p "${f}.d"; tar -xzf "$f" -C "${f}.d" || true ;;
+              *.tar.bz2) mkdir -p "${f}.d"; tar -xjf "$f" -C "${f}.d" || true ;;
+              *.zip) mkdir -p "${f}.d"; unzip -q "$f" -d "${f}.d" || true ;;
+            esac
+          done
+          find recovered -type f -maxdepth 5 -printf '%p %s bytes\n' | sort > recovered/file-inventory.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: 7thin-literature-source-recovery
+          path: recovered/
+          if-no-files-found: error
+          retention-days: 7
