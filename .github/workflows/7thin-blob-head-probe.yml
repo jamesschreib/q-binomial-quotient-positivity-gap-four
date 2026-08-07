@@ -1,0 +1,37 @@
+name: Temporary 7-thin direct blob-read probe
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Compare direct blob status codes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.error, urllib.request
+          base='https://c22dur260729jms1.blob.core.windows.net/sat-runs/'
+          names=[
+            '__definitely_missing__', 'f2', 'f2.bin', 'f2_merged.bin',
+            'frontier/f2.bin', 'next_frontier/f2.bin', 'next-frontier/f2.bin',
+            'o000', 'o000.json', 'receipts/o000.json', 'receipts/o000/checkpoint.bin',
+            'ordinal-000.json', 'ordinal_000.json', '000/checkpoint.bin'
+          ]
+          for name in names:
+              req=urllib.request.Request(base+name,method='HEAD',headers={'x-ms-version':'2023-11-03'})
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r:
+                      print(r.status, r.headers.get('Content-Length'), name)
+              except urllib.error.HTTPError as e:
+                  print(e.code, e.headers.get('Content-Length'), name)
+              except Exception as e:
+                  print('ERR',type(e).__name__,name)
+          PY
